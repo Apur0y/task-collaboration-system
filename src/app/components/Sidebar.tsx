@@ -47,7 +47,7 @@ export function Sidebar() {
             animate={{ opacity: 1 }}
             className="font-semibold"
           >
-            Smart Collab
+            Manage Master
           </motion.h2>
         )}
         <Button

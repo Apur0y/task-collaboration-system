@@ -65,7 +65,18 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4">
+    <div className="min-h-screen flex gap-10 items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4">
+    <div className="hidden md:flex">
+      <motion.h1
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-4xl font-bold text-center mb-8 w-full max-w-md "
+      >
+       
+        <img src="https://images.pexels.com/photos/6578413/pexels-photo-6578413.jpeg" className="rounded"  alt="" />
+      </motion.h1>
+    </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -74,9 +85,9 @@ export default function AuthPage() {
       >
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Smart Collab</CardTitle>
+            <CardTitle className="text-2xl text-center">Manage Master</CardTitle>
             <CardDescription className="text-center">
-              Project & Task Collaboration System
+              Always stay connected with the team
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -93,7 +104,7 @@ export default function AuthPage() {
                     <Input
                       id="login-email"
                       type="email"
-                      placeholder="you@example.com"
+                      placeholder="Email here"
                       {...loginForm.register("email")}
                     />
                     {loginForm.formState.errors.email && (
@@ -130,7 +141,7 @@ export default function AuthPage() {
                     <Input
                       id="signup-name"
                       type="text"
-                      placeholder="John Doe"
+                      placeholder="Your Name"
                       {...signupForm.register("name")}
                     />
                     {signupForm.formState.errors.name && (
@@ -145,7 +156,7 @@ export default function AuthPage() {
                     <Input
                       id="signup-email"
                       type="email"
-                      placeholder="you@example.com"
+                      placeholder="Email here"
                       {...signupForm.register("email")}
                     />
                     {signupForm.formState.errors.email && (
