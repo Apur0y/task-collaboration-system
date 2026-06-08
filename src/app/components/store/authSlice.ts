@@ -16,12 +16,11 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<{ email: string; password: string }>) => {
-      const user = mockUsers.find(u => u.email === action.payload.email);
-      if (user) {
-        state.user = user;
+    login: (state, action) => {
+      
+        state.user = action.payload;
         state.isAuthenticated = true;
-      }
+     
     },
     loginWithRole: (state, action: PayloadAction<User['role']>) => {
       const user = mockUsers.find(u => u.role === action.payload);
@@ -30,14 +29,9 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
       }
     },
-    signup: (state, action: PayloadAction<{ firstName: string; lastName: string; email: string; password: string }>) => {
-      const newUser: User = {
-        id: Date.now().toString(),
-        name: `${action.payload.firstName} ${action.payload.lastName}`,
-        email: action.payload.email,
-        role: 'Team Member',
-      };
-      state.user = newUser;
+    signup: (state, action) => {
+     
+      state.user =  action.payload;;
       state.isAuthenticated = true;
     },
     logout: (state) => {

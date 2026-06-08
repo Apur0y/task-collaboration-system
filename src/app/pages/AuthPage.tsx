@@ -24,7 +24,10 @@ import {
 } from "../components/ui/tabs";
 import { UserRole } from "../components/store/types";
 import { loginSchema, signupSchema } from "../components/zod/zodValidation";
-import { useLoginMutation } from "../components/redux/authApi";
+import {
+  useLoginMutation,
+  useSignupMutation,
+} from "../components/redux/authApi";
 import { toast } from "sonner";
 import Loader from "../components/Loader";
 
@@ -35,7 +38,8 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState("login");
-  const [loginUser, {isLoading}] = useLoginMutation();
+  const [loginUser, { isLoading }] = useLoginMutation();
+  const [signupUser, { isLoading: signLoading }] = useSignupMutation();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -59,17 +63,23 @@ export default function AuthPage() {
     try {
       const user = await loginUser(data).unwrap();
 
-      dispatch(login(user));
+      dispatch(login(user.data.user));
+      console.log(user);
       navigate("/dashboard");
-      console.log("GO dash");
     } catch (error: any) {
       toast.error(error?.data?.error || "Login failed");
     }
   };
 
-  const handleSignup = (data: SignupFormData) => {
-    dispatch(signup(data));
-    navigate("/dashboard");
+  const handleSignup = async (data: SignupFormData) => {
+    try {
+      const user = await signupUser(data).unwrap();
+
+      dispatch(signup(user.data.user));
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error(error?.data?.error || "Login failed");
+    }
   };
 
   const handleDemoLogin = (role: UserRole) => {
@@ -163,10 +173,8 @@ export default function AuthPage() {
                     </div>
 
                     <Button type="submit" className="w-full cursor-pointer">
-                      {!isLoading? <span>Login</span> :  <Loader />}
-                     
+                      {!isLoading ? <span>Login</span> : <Loader />}
                     </Button>
-
                   </form>
                 </motion.div>
               </TabsContent>
@@ -242,7 +250,7 @@ export default function AuthPage() {
                     </div>
 
                     <Button type="submit" className="w-full">
-                      Sign Up
+                      {!signLoading? <span> Sign Up</span>:<Loader/>}
                     </Button>
                   </form>
                 </motion.div>

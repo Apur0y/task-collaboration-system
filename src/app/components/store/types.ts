@@ -2,7 +2,8 @@ export type UserRole = 'Admin' | 'Project Manager' | 'Team Member';
 
 export interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: UserRole;
   avatar?: string;

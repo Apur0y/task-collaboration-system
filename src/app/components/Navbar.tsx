@@ -16,17 +16,28 @@ import {
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { logout } from "./store/authSlice";
+import { useLogoutMutation } from "./redux/authApi";
 
 export function Navbar() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { theme, setTheme } = useTheme();
+
+  const [logoutUser] = useLogoutMutation();
+
   const user = useAppSelector((state) => state.auth.user);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate("/");
+  const handleLogout = async () => {
+    console.log("Login oy");
+    try {
+      await logoutUser({}).unwrap(); // RTK Query safe call
+
+      dispatch(logout());
+      navigate("/");
+    } catch (error: any) {
+      console.log("Logout failed:", error);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -73,10 +84,13 @@ export function Navbar() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Button
+                variant="ghost"
+                className="relative h-10 w-10 rounded-full"
+              >
                 <Avatar>
                   <AvatarFallback>
-                    {user ? getInitials(user.name) : "U"}
+                    {user ? getInitials(user.firstName) : "U"}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -84,7 +98,9 @@ export function Navbar() {
             <DropdownMenuContent className="w-56" align="end">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.name}</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user?.firstName}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user?.email}
                   </p>
