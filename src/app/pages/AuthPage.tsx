@@ -64,7 +64,7 @@ export default function AuthPage() {
       const user = await loginUser(data).unwrap();
 
       dispatch(login(user.data.user));
-      console.log(user);
+     
       navigate("/dashboard");
     } catch (error: any) {
       toast.error(error?.data?.error || "Login failed");

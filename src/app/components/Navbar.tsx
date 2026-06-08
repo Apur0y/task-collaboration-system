@@ -67,6 +67,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
+             className="cursor-pointer "
             size="icon"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           >
@@ -77,7 +78,7 @@ export function Navbar() {
             )}
           </Button>
 
-          <Button variant="ghost" size="icon" className="relative">
+          <Button className="cursor-pointer relative" variant="ghost" size="icon" >
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
           </Button>
@@ -86,7 +87,7 @@ export function Navbar() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-10 w-10 rounded-full"
+                className="relative h-10 w-10 rounded-full cursor-pointer"
               >
                 <Avatar>
                   <AvatarFallback>

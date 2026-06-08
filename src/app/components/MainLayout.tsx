@@ -3,6 +3,8 @@ import { Sidebar } from "./Sidebar";
 import { Navbar } from "./Navbar";
 
 export function MainLayout() {
+
+  
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />

@@ -85,7 +85,7 @@ export default function ProjectsPage() {
     resolver: zodResolver(projectSchema),
   });
 
-  const canCreateProject = user?.role === "Admin" || user?.role === "Project Manager";
+
   const canEditProject = user?.role === "Admin" || user?.role === "Project Manager";
   const canDeleteProject = user?.role === "Admin";
 
@@ -156,10 +156,10 @@ export default function ProjectsPage() {
             Manage and track all your projects
           </p>
         </div>
-        {canCreateProject && (
+        
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="cursor-pointer">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Project
               </Button>
@@ -248,7 +248,7 @@ export default function ProjectsPage() {
               </form>
             </DialogContent>
           </Dialog>
-        )}
+        
       </div>
 
       <div className="flex items-center gap-4">
