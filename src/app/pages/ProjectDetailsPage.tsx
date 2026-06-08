@@ -16,8 +16,6 @@ import {
   MessageSquare,
   Paperclip,
 } from "lucide-react";
-import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { addTask, updateTask, deleteTask, addComment } from "../store/tasksSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -50,6 +48,7 @@ import { Badge } from "../components/ui/badge";
 import { Task, TaskStatus, TaskPriority } from "../store/types";
 import { formatDate, formatDateTime } from "../lib/utils";
 import { toast } from "sonner";
+import { useAppDispatch, useAppSelector } from "../components/store/hooks";
 
 const taskSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),

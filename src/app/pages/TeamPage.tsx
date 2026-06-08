@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { Plus, Mail, User } from "lucide-react";
-import { useAppSelector } from "../store/hooks";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
@@ -17,6 +16,7 @@ import {
 } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { useAppSelector } from "../components/store/hooks";
 
 export default function TeamPage() {
   const user = useAppSelector((state) => state.auth.user);

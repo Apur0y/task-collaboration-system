@@ -14,8 +14,6 @@ import {
   Trash2,
   Calendar,
 } from "lucide-react";
-import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { addProject, updateProject, deleteProject } from "../store/projectsSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -45,9 +43,11 @@ import {
 } from "../components/ui/select";
 import { Badge } from "../components/ui/badge";
 import { Progress } from "../components/ui/progress";
-import { Project, ProjectStatus } from "../store/types";
 import { formatDate } from "../lib/utils";
 import { toast } from "sonner";
+import { useAppDispatch, useAppSelector } from "../components/store/hooks";
+import { Project, ProjectStatus } from "../components/store/types";
+import { addProject, deleteProject, updateProject } from "../components/store/projectsSlice";
 
 const projectSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),

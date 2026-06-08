@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Search, Bell, Sun, Moon, LogOut, User } from "lucide-react";
 import { useTheme } from "./theme-provider";
-import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { logout } from "../store/authSlice";
+
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import {
@@ -15,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "./ui/avatar";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
+import { logout } from "./store/authSlice";
 
 export function Navbar() {
   const navigate = useNavigate();

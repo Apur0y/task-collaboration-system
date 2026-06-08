@@ -30,10 +30,10 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
       }
     },
-    signup: (state, action: PayloadAction<{ name: string; email: string; password: string }>) => {
+    signup: (state, action: PayloadAction<{ firstName: string; lastName: string; email: string; password: string }>) => {
       const newUser: User = {
         id: Date.now().toString(),
-        name: action.payload.name,
+        name: `${action.payload.firstName} ${action.payload.lastName}`,
         email: action.payload.email,
         role: 'Team Member',
       };

@@ -2,8 +2,8 @@ import { RouterProvider } from "react-router";
 import { Provider } from "react-redux";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "./components/theme-provider";
-import { store } from "./store/store";
 import { router } from "./routes";
+import { store } from "./components/store/store";
 
 export default function App() {
   return (
