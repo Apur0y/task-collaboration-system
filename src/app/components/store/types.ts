@@ -9,7 +9,7 @@ export interface User {
   avatar?: string;
 }
 
-export type ProjectStatus = 'Active' | 'Completed' | 'On Hold';
+export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
 
 export interface Project {
   id: string;

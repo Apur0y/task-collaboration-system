@@ -48,11 +48,12 @@ import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "../components/store/hooks";
 import { Project, ProjectStatus } from "../components/store/types";
 import { addProject, deleteProject, updateProject } from "../components/store/projectsSlice";
+import { useCreateProjectMutation, useGetAllProjectsQuery } from "../components/redux/projectApi";
 
 const projectSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  status: z.enum(["Active", "Completed", "On Hold"] as const),
+  status: z.enum(["ACTIVE", "COMPLETED", "ON_HOLD"] as const),
   deadline: z.string().min(1, "Deadline is required"),
   progress: z.number().min(0).max(100),
 });
@@ -62,7 +63,10 @@ type ProjectFormData = z.infer<typeof projectSchema>;
 export default function ProjectsPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
-  const projects = useAppSelector((state) => state.projects.projects);
+  const [createProject]=useCreateProjectMutation()
+  const { data:allProject, isLoading } = useGetAllProjectsQuery();
+  console.log("all",allProject?.data);
+  const projects:any = allProject?.data
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,11 +75,11 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   const form = useForm<ProjectFormData>({
-    resolver: zodResolver(projectSchema),
+    // resolver: zodResolver(projectSchema),
     defaultValues: {
       name: "",
       description: "",
-      status: "Active",
+      status: "ACTIVE",
       deadline: "",
       progress: 0,
     },
@@ -89,17 +93,32 @@ export default function ProjectsPage() {
   const canEditProject = user?.role === "Admin" || user?.role === "Project Manager";
   const canDeleteProject = user?.role === "Admin";
 
-  const filteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProjects = allProject?.data
+  
+  //  projects.filter((project:any) =>
+  //   project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //   project.description.toLowerCase().includes(searchQuery.toLowerCase())
+  // );
 
-  const handleCreateProject = (data: ProjectFormData) => {
-    dispatch(addProject(data));
+const handleCreateProject = async (data: ProjectFormData) => {
+  console.log("Here dea",data);
+  try {
+    await createProject(data).unwrap();
+
     toast.success("Project created successfully");
+
     setIsCreateDialogOpen(false);
     form.reset();
-  };
+  } catch (error: any) {
+    console.error(error);
+
+    toast.error(
+      error?.data?.message ||
+      error?.data?.error ||
+      "Failed to create project"
+    );
+  }
+};
 
   const handleEditProject = (data: ProjectFormData) => {
     if (editingProject) {
@@ -136,11 +155,11 @@ export default function ProjectsPage() {
 
   const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
-      case "Active":
+      case "ACTIVE":
         return "bg-green-500";
-      case "Completed":
+      case "COMPLETED":
         return "bg-blue-500";
-      case "On Hold":
+      case "ON_HOLD":
         return "bg-orange-500";
       default:
         return "bg-gray-500";
@@ -285,7 +304,7 @@ export default function ProjectsPage() {
           animate={{ opacity: 1 }}
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
-          {filteredProjects.map((project) => (
+          {filteredProjects?.map((project:any) => (
             <motion.div
               key={project.id}
               initial={{ opacity: 0, y: 20 }}
@@ -359,7 +378,7 @@ export default function ProjectsPage() {
         </motion.div>
       ) : (
         <div className="space-y-4">
-          {filteredProjects.map((project) => (
+          {filteredProjects.map((project:any) => (
             <Card key={project.id}>
               <CardContent className="flex items-center justify-between p-6">
                 <div className="flex-1 space-y-2">
@@ -463,9 +482,9 @@ export default function ProjectsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="On Hold">On Hold</SelectItem>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="COMPLETED">Completed</SelectItem>
+                    <SelectItem value="ON_HOLD">On Hold</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
