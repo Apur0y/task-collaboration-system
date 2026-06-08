@@ -71,7 +71,8 @@ interface KanbanTaskCardProps {
 }
 
 function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
-  const teamMembers = useAppSelector((state) => state.team.members);
+  const teamMembers = []
+  // useAppSelector((state) => state.team.members);
 
   const [{ isDragging }, drag] = useDrag({
     type: "TASK",
@@ -99,43 +100,34 @@ function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
   };
 
   return (
-    <div
-      ref={drag}
+    <Card 
+      ref={drag as any}
       style={{ opacity: isDragging ? 0.5 : 1 }}
-      className="cursor-move"
+      className="hover:shadow-md transition-shadow cursor-move"
+      onClick={onClick}
     >
-      <Card className="hover:shadow-md transition-shadow" onClick={onClick}>
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <h4 className="font-medium text-sm line-clamp-2">{task.title}</h4>
-            <Badge className={getPriorityColor(task.priority)}>
-              {task.priority}
-            </Badge>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="font-medium text-sm line-clamp-2">{task.title}</h4>
+          <Badge className={getPriorityColor(task.priority)}>
+            {task.priority}
+          </Badge>
+        </div>
+        <p className="text-xs text-muted-foreground line-clamp-2">
+          {task.description}
+        </p>
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            {formatDate(task.dueDate)}
           </div>
-          <p className="text-xs text-muted-foreground line-clamp-2">
-            {task.description}
-          </p>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {formatDate(task.dueDate)}
-            </div>
-            <div className="flex items-center gap-2">
-              {task.comments && task.comments.length > 0 && (
-                <div className="flex items-center gap-1">
-                  <MessageSquare className="h-3 w-3" />
-                  {task.comments.length}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-1 text-xs">
-            <User className="h-3 w-3" />
-            <span className="line-clamp-1">{getAssigneeNames()}</span>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+        <div className="flex items-center gap-1 text-xs">
+          <User className="h-3 w-3" />
+          <span className="line-clamp-1">{getAssigneeNames()}</span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -191,7 +183,7 @@ function KanbanColumn({ status, tasks, onTaskClick, projectId }: KanbanColumnPro
 
   return (
     <div
-      ref={drop}
+      ref={drop as any}
       className={`flex-1 min-w-[280px] border-t-4 ${getColumnColor()} ${
         isOver ? "bg-accent/50" : ""
       }`}
@@ -215,7 +207,7 @@ export default function ProjectDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const user = useAppSelector((state) => state.auth.user);
-  const teamMembers = useAppSelector((state) => state.team.members);
+  // const teamMembers = useAppSelector((state) => state.team.members);
 
   const { data: projectData, isLoading: isProjectLoading } = useGetProjectByIdQuery(id!);
   const { data: tasksData } = useGetTasksByProjectIdQuery(id!);
@@ -223,6 +215,8 @@ export default function ProjectDetailsPage() {
 
   const project = projectData?.data;
   const projectTasks = tasksData?.data || [];
+  console.log("baha",projectTasks);
+   const teamMembers =project?.members
 
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -297,7 +291,7 @@ export default function ProjectDetailsPage() {
         return "bg-red-500";
       case TaskPriority.MEDIUM:
         return "bg-orange-500";
-      case "Low":
+      case TaskPriority.LOW:
         return "bg-green-500";
     }
   };
@@ -315,8 +309,8 @@ export default function ProjectDetailsPage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-              <p className="text-muted-foreground">{project.description}</p>
+              <h1 className="text-3xl font-bold tracking-tight">{project?.name}</h1>
+              <p className="text-muted-foreground">{project?.description}</p>
             </div>
           </div>
           
@@ -329,7 +323,7 @@ export default function ProjectDetailsPage() {
                 <DialogHeader>
                   <DialogTitle>Create New Task</DialogTitle>
                   <DialogDescription>
-                    Add a new task to {project.name}
+                    Add a new task to {project?.name}
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={form.handleSubmit(handleCreateTask)}>
@@ -407,7 +401,7 @@ export default function ProjectDetailsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="">Unassigned</SelectItem>
-                          {teamMembers.map((member) => (
+                          {teamMembers?.map((member) => (
                             <SelectItem key={member.id} value={member.id}>
                               {member.name} - {member.role}
                             </SelectItem>
@@ -569,50 +563,12 @@ export default function ProjectDetailsPage() {
                     )}
                   </div>
 
-                  {selectedTask.attachments.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2">Attachments</h4>
-                      <div className="space-y-2">
-                        {selectedTask.attachments.map((attachment) => (
-                          <div
-                            key={attachment.id}
-                            className="flex items-center gap-2 p-2 border rounded-md"
-                          >
-                            <Paperclip className="h-4 w-4" />
-                            <span className="text-sm flex-1">{attachment.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {(attachment.size / 1024).toFixed(2)} KB
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   <div>
                     <h4 className="text-sm font-semibold mb-4">Comments</h4>
                     <div className="space-y-4 mb-4">
-                      {selectedTask.comments.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          No comments yet
-                        </p>
-                      ) : (
-                        selectedTask.comments.map((comment) => (
-                          <div key={comment.id} className="border-l-2 pl-4 py-2">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium">
-                                {comment.userName}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {formatDateTime(comment.createdAt)}
-                              </span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {comment.content}
-                            </p>
-                          </div>
-                        ))
-                      )}
+                      <p className="text-sm text-muted-foreground">
+                        Comments feature coming soon
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Textarea

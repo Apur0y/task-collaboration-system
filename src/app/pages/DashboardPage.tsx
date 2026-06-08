@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Progress } from "../components/ui/progress";
 import { isOverdue, formatDateTime } from "../lib/utils";
 import { useAppSelector } from "../components/store/hooks";
+import { TaskStatus, TaskPriority } from "../components/store/types";
 
 const container = {
   hidden: { opacity: 0 },
@@ -50,27 +51,26 @@ export default function DashboardPage() {
   // Calculate KPIs
   const totalProjects = projects.length;
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.status === "Completed").length;
+  const completedTasks = tasks.filter((t) => t.status === TaskStatus.COMPLETED).length;
   const pendingTasks = tasks.filter(
-    (t) => t.status === "To Do" || t.status === "In Progress" || t.status === "In Review"
+    (t) => t.status === TaskStatus.TODO || t.status === TaskStatus.IN_PROGRESS
   ).length;
   const overdueTasks = tasks.filter(
-    (t) => t.status !== "Completed" && isOverdue(t.dueDate)
+    (t) => t.status !== TaskStatus.COMPLETED && isOverdue(t.dueDate)
   ).length;
 
   // Task Status Distribution
   const statusData = [
-    { name: "To Do", value: tasks.filter((t) => t.status === "To Do").length },
-    { name: "In Progress", value: tasks.filter((t) => t.status === "In Progress").length },
-    { name: "In Review", value: tasks.filter((t) => t.status === "In Review").length },
+    { name: "To Do", value: tasks.filter((t) => t.status === TaskStatus.TODO).length },
+    { name: "In Progress", value: tasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length },
     { name: "Completed", value: completedTasks },
   ];
 
   // Tasks by Priority
   const priorityData = [
-    { name: "Low", tasks: tasks.filter((t) => t.priority === "Low").length },
-    { name: "Medium", tasks: tasks.filter((t) => t.priority === "Medium").length },
-    { name: "High", tasks: tasks.filter((t) => t.priority === "High").length },
+    { name: "Low", tasks: tasks.filter((t) => t.priority === TaskPriority.LOW).length },
+    { name: "Medium", tasks: tasks.filter((t) => t.priority === TaskPriority.MEDIUM).length },
+    { name: "High", tasks: tasks.filter((t) => t.priority === TaskPriority.HIGH).length },
   ];
 
   // Project Progress Trend (mock data based on project progress)
@@ -267,7 +267,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-4">
               {tasks
-                .filter((t) => t.status !== "Completed")
+                .filter((t) => t.status !== TaskStatus.COMPLETED)
                 .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
                 .slice(0, 5)
                 .map((task) => (
@@ -278,7 +278,7 @@ export default function DashboardPage() {
                         {new Date(task.dueDate).toLocaleDateString()}
                       </p>
                     </div>
-                    {task.priority === "High" && (
+                    {task.priority === TaskPriority.HIGH && (
                       <AlertCircle className="h-4 w-4 text-red-500" />
                     )}
                   </div>
