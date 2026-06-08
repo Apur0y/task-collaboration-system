@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { uppercase, z } from "zod";
 import {
   Plus,
   Search,
@@ -101,9 +101,14 @@ export default function ProjectsPage() {
   // );
 
 const handleCreateProject = async (data: ProjectFormData) => {
-  console.log("Here dea",data);
   try {
-    await createProject(data).unwrap();
+     const payload = {
+      ...data,
+      status: data.status.toUpperCase()
+    };
+
+    console.log("Here dea",payload);
+    await createProject(payload).unwrap();
 
     toast.success("Project created successfully");
 

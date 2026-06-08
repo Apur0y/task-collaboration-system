@@ -31,9 +31,9 @@ export function ProtectedRoute() {
       return <Loader />; // Or return a Loader component if you have one
   }
 
-  if (!active) {
-    return <Navigate to="/" replace />;
-  }
+  // if (!active) {
+  //   return <Navigate to="/" replace />;
+  // }
 
   return <Outlet />;
 }

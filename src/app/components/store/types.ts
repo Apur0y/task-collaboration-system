@@ -1,71 +1,125 @@
-export type UserRole = 'Admin' | 'Project Manager' | 'Team Member';
-
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-  avatar?: string;
+export enum UserRole {
+  ADMIN = "ADMIN",
+  USER = "USER",
 }
 
-export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
+export enum ProjectRole {
+  OWNER = "OWNER",
+  MANAGER = "MANAGER",
+  MEMBER = "MEMBER",
+}
+
+export enum ProjectStatus {
+  ACTIVE = "ACTIVE",
+  COMPLETED = "COMPLETED",
+  ON_HOLD = "ON_HOLD",
+}
+
+export enum TaskPriority {
+  HIGH = "HIGH",
+  MEDIUM = "MEDIUM",
+  LOW = "LOW",
+}
+
+export enum TaskStatus {
+  TODO = "TODO",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+}
+export interface User {
+  id: string;
+  email: string;
+  passwordHash: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ================= PROJECT =================
 
 export interface Project {
   id: string;
   name: string;
-  description: string;
-  status: ProjectStatus;
+  description?: string | null;
   deadline: string;
-  progress: number;
+  status: ProjectStatus;
+  ownerId: string;
   createdAt: string;
   updatedAt: string;
+
+  owner?: User;
+  members?: ProjectMember[];
+  tasks?: Task[];
 }
 
-export type TaskStatus = 'To Do' | 'In Progress' | 'In Review' | 'Completed';
-export type TaskPriority = 'Low' | 'Medium' | 'High';
+// ================= PROJECT MEMBER =================
 
-export interface Comment {
-  id: string;
+export interface ProjectMember {
+  projectId: string;
   userId: string;
-  userName: string;
-  content: string;
-  createdAt: string;
+  assignedAt: string;
+  role: ProjectRole;
+
+  project?: Project;
+  user?: User;
 }
 
-export interface Attachment {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  uploadedAt: string;
-}
+// ================= TASK =================
 
 export interface Task {
   id: string;
-  projectId: string;
   title: string;
-  description: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  assignedTo: string[];
+  description?: string | null;
+  projectId: string;
+  assignedMemberId?: string | null;
   dueDate: string;
-  comments: Comment[];
-  attachments: Attachment[];
+  priority: TaskPriority;
+  status: TaskStatus;
   createdAt: string;
   updatedAt: string;
+
+  project?: Project;
+  assignedMember?: User | null;
 }
 
-export interface Activity {
+// ================= COMMENT =================
+
+export interface Comment {
   id: string;
-  type: 'task_created' | 'task_assigned' | 'task_completed' | 'project_created' | 'member_added';
-  description: string;
-  timestamp: string;
+  text: string;
+  taskId: string;
   userId: string;
+  createdAt: string;
+
+  task?: Task;
+  user?: User;
 }
 
-export interface TeamMember extends User {
-  tasksAssigned: number;
-  tasksCompleted: number;
-  workloadPercentage: number;
+// ================= ATTACHMENT =================
+
+export interface Attachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  taskId: string;
+  uploadedById: string;
+  createdAt: string;
+
+  task?: Task;
+  uploadedBy?: User;
+}
+
+// ================= ACTIVITY LOG =================
+
+export interface ActivityLog {
+  id: string;
+  action: string;
+  userId?: string | null;
+  projectId?: string | null;
+  createdAt: string;
+
+  user?: User | null;
+  project?: Project | null;
 }

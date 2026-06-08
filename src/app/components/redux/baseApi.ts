@@ -6,9 +6,10 @@ export const baseApi = createApi({
   reducerPath: "baseApi",
 
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3000/api/v1/",
+    baseUrl: import.meta.env.VITE_SERVER_API,
     credentials: "include",
   }),
+  tagTypes:["Project","Task"],
 
   endpoints: () => ({}),
 });

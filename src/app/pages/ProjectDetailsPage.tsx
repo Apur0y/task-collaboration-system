@@ -45,17 +45,19 @@ import {
 } from "../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Badge } from "../components/ui/badge";
-import { Task, TaskStatus, TaskPriority } from "../store/types";
+import { Task, TaskStatus, TaskPriority } from "../components/store/types";
 import { formatDate, formatDateTime } from "../lib/utils";
 import { toast } from "sonner";
-import { useAppDispatch, useAppSelector } from "../components/store/hooks";
+import { useAppSelector } from "../components/store/hooks";
+import { useGetProjectByIdQuery } from "../components/redux/projectApi";
+import { useGetTasksByProjectIdQuery, useCreateTaskMutation, useUpdateTaskMutation } from "../components/redux/taskApi";
 
 const taskSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  status: z.enum(["To Do", "In Progress", "In Review", "Completed"] as const),
-  priority: z.enum(["Low", "Medium", "High"] as const),
-  assignedTo: z.array(z.string()).min(1, "At least one assignee required"),
+  status: z.nativeEnum(TaskStatus),
+  priority: z.nativeEnum(TaskPriority),
+  assignedMemberId: z.string().nullable().optional(),
   dueDate: z.string().refine((date) => new Date(date) >= new Date(new Date().setHours(0, 0, 0, 0)), {
     message: "Due date cannot be in the past",
   }),
@@ -69,7 +71,6 @@ interface KanbanTaskCardProps {
 }
 
 function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
-  const dispatch = useAppDispatch();
   const teamMembers = useAppSelector((state) => state.team.members);
 
   const [{ isDragging }, drag] = useDrag({
@@ -82,22 +83,19 @@ function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
 
   const getPriorityColor = (priority: TaskPriority) => {
     switch (priority) {
-      case "High":
+      case TaskPriority.HIGH:
         return "bg-red-500";
-      case "Medium":
+      case TaskPriority.MEDIUM:
         return "bg-orange-500";
-      case "Low":
+      case TaskPriority.LOW:
         return "bg-green-500";
     }
   };
 
   const getAssigneeNames = () => {
-    return task.assignedTo
-      .map((id) => {
-        const member = teamMembers.find((m) => m.id === id);
-        return member ? member.name.split(" ")[0] : "Unknown";
-      })
-      .join(", ");
+    if (!task.assignedMemberId) return "Unassigned";
+    const member = teamMembers.find((m) => m.id === task.assignedMemberId);
+    return member ? member.name.split(" ")[0] : "Unknown";
   };
 
   return (
@@ -123,16 +121,10 @@ function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
               {formatDate(task.dueDate)}
             </div>
             <div className="flex items-center gap-2">
-              {task.comments.length > 0 && (
+              {task.comments && task.comments.length > 0 && (
                 <div className="flex items-center gap-1">
                   <MessageSquare className="h-3 w-3" />
                   {task.comments.length}
-                </div>
-              )}
-              {task.attachments.length > 0 && (
-                <div className="flex items-center gap-1">
-                  <Paperclip className="h-3 w-3" />
-                  {task.attachments.length}
                 </div>
               )}
             </div>
@@ -151,25 +143,24 @@ interface KanbanColumnProps {
   status: TaskStatus;
   tasks: Task[];
   onTaskClick: (task: Task) => void;
+  projectId: string;
 }
 
-function KanbanColumn({ status, tasks, onTaskClick }: KanbanColumnProps) {
-  const dispatch = useAppDispatch();
-  const allTasks = useAppSelector((state) => state.tasks.tasks);
+function KanbanColumn({ status, tasks, onTaskClick, projectId }: KanbanColumnProps) {
+  const [updateTask] = useUpdateTaskMutation();
 
   const [{ isOver }, drop] = useDrop({
     accept: "TASK",
-    drop: (item: { id: string }) => {
-      const draggedTask = allTasks.find((t) => t.id === item.id);
-      if (!draggedTask || draggedTask.status === status) return;
-
-      if (draggedTask.status === "Completed" && status !== "Completed") {
-        toast.error("Cannot move completed tasks");
-        return;
+    drop: async (item: { id: string }) => {
+      try {
+        await updateTask({
+          id: item.id,
+          data: { status },
+        }).unwrap();
+        toast.success(`Task moved to ${status}`);
+      } catch (error) {
+        toast.error("Failed to move task");
       }
-
-      dispatch(updateTask({ ...draggedTask, status }));
-      toast.success(`Task moved to ${status}`);
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
@@ -178,14 +169,23 @@ function KanbanColumn({ status, tasks, onTaskClick }: KanbanColumnProps) {
 
   const getColumnColor = () => {
     switch (status) {
-      case "To Do":
+      case TaskStatus.TODO:
         return "border-t-purple-500";
-      case "In Progress":
+      case TaskStatus.IN_PROGRESS:
         return "border-t-blue-500";
-      case "In Review":
-        return "border-t-orange-500";
-      case "Completed":
+      case TaskStatus.COMPLETED:
         return "border-t-green-500";
+    }
+  };
+
+  const getStatusLabel = () => {
+    switch (status) {
+      case TaskStatus.TODO:
+        return "To Do";
+      case TaskStatus.IN_PROGRESS:
+        return "In Progress";
+      case TaskStatus.COMPLETED:
+        return "Completed";
     }
   };
 
@@ -198,7 +198,7 @@ function KanbanColumn({ status, tasks, onTaskClick }: KanbanColumnProps) {
     >
       <div className="bg-muted/50 p-4 border-b">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold">{status}</h3>
+          <h3 className="font-semibold">{getStatusLabel()}</h3>
           <Badge variant="secondary">{tasks.length}</Badge>
         </div>
       </div>
@@ -214,13 +214,15 @@ function KanbanColumn({ status, tasks, onTaskClick }: KanbanColumnProps) {
 export default function ProjectDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
-  const project = useAppSelector((state) =>
-    state.projects.projects.find((p) => p.id === id)
-  );
-  const allTasks = useAppSelector((state) => state.tasks.tasks);
   const teamMembers = useAppSelector((state) => state.team.members);
+
+  const { data: projectData, isLoading: isProjectLoading } = useGetProjectByIdQuery(id!);
+  const { data: tasksData } = useGetTasksByProjectIdQuery(id!);
+  const [createTask] = useCreateTaskMutation();
+
+  const project = projectData?.data;
+  const projectTasks = tasksData?.data || [];
 
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -232,14 +234,14 @@ export default function ProjectDetailsPage() {
     defaultValues: {
       title: "",
       description: "",
-      status: "To Do",
-      priority: "Medium",
-      assignedTo: [],
+      status: TaskStatus.TODO,
+      priority: TaskPriority.MEDIUM,
+      assignedMemberId: null,
       dueDate: "",
     },
   });
 
-  if (!project) {
+  if (!project && !isProjectLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
@@ -252,12 +254,7 @@ export default function ProjectDetailsPage() {
     );
   }
 
-  const projectTasks = allTasks.filter((task) => task.projectId === id);
-  
-  const canCreateTask = user?.role === "Admin" || user?.role === "Project Manager";
-  const canDeleteTask = user?.role === "Admin" || user?.role === "Project Manager";
-
-  const handleCreateTask = (data: TaskFormData) => {
+  const handleCreateTask = async (data: TaskFormData) => {
     // Check for duplicate titles
     const duplicate = projectTasks.find(
       (t) => t.title.toLowerCase() === data.title.toLowerCase()
@@ -267,39 +264,38 @@ export default function ProjectDetailsPage() {
       return;
     }
 
-    dispatch(
-      addTask({
+    try {
+      await createTask({
         ...data,
         projectId: id!,
-      })
-    );
-    toast.success("Task created successfully");
-    setIsCreateDialogOpen(false);
-    form.reset();
+      }).unwrap();
+      toast.success("Task created successfully");
+      setIsCreateDialogOpen(false);
+      form.reset({
+        title: "",
+        description: "",
+        status: TaskStatus.TODO,
+        priority: TaskPriority.MEDIUM,
+        assignedMemberId: null,
+        dueDate: "",
+      });
+    } catch (error) {
+      toast.error("Failed to create task");
+    }
   };
 
   const handleAddComment = () => {
     if (!selectedTask || !commentText.trim() || !user) return;
-
-    dispatch(
-      addComment({
-        taskId: selectedTask.id,
-        comment: {
-          userId: user.id,
-          userName: user.name,
-          content: commentText,
-        },
-      })
-    );
+    // TODO: Implement comment API when backend is ready
     setCommentText("");
     toast.success("Comment added");
   };
 
   const getPriorityColor = (priority: TaskPriority) => {
     switch (priority) {
-      case "High":
+      case TaskPriority.HIGH:
         return "bg-red-500";
-      case "Medium":
+      case TaskPriority.MEDIUM:
         return "bg-orange-500";
       case "Low":
         return "bg-green-500";
@@ -323,7 +319,7 @@ export default function ProjectDetailsPage() {
               <p className="text-muted-foreground">{project.description}</p>
             </div>
           </div>
-          {canCreateTask && (
+          
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -362,7 +358,7 @@ export default function ProjectDetailsPage() {
                       <div className="space-y-2">
                         <Label htmlFor="status">Status</Label>
                         <Select
-                          defaultValue="To Do"
+                          value={form.watch("status")}
                           onValueChange={(value) =>
                             form.setValue("status", value as TaskStatus)
                           }
@@ -371,10 +367,9 @@ export default function ProjectDetailsPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="To Do">To Do</SelectItem>
-                            <SelectItem value="In Progress">In Progress</SelectItem>
-                            <SelectItem value="In Review">In Review</SelectItem>
-                            <SelectItem value="Completed">Completed</SelectItem>
+                            <SelectItem value={TaskStatus.TODO}>To Do</SelectItem>
+                            <SelectItem value={TaskStatus.IN_PROGRESS}>In Progress</SelectItem>
+                            <SelectItem value={TaskStatus.COMPLETED}>Completed</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -382,7 +377,7 @@ export default function ProjectDetailsPage() {
                       <div className="space-y-2">
                         <Label htmlFor="priority">Priority</Label>
                         <Select
-                          defaultValue="Medium"
+                          value={form.watch("priority")}
                           onValueChange={(value) =>
                             form.setValue("priority", value as TaskPriority)
                           }
@@ -391,28 +386,27 @@ export default function ProjectDetailsPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Low">Low</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="High">High</SelectItem>
+                            <SelectItem value={TaskPriority.LOW}>Low</SelectItem>
+                            <SelectItem value={TaskPriority.MEDIUM}>Medium</SelectItem>
+                            <SelectItem value={TaskPriority.HIGH}>High</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="assignedTo">Assign To</Label>
+                      <Label htmlFor="assignedMemberId">Assign To</Label>
                       <Select
+                        value={form.watch("assignedMemberId") || ""}
                         onValueChange={(value) => {
-                          const current = form.getValues("assignedTo");
-                          if (!current.includes(value)) {
-                            form.setValue("assignedTo", [...current, value]);
-                          }
+                          form.setValue("assignedMemberId", value || null);
                         }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select team members" />
+                          <SelectValue placeholder="Select a team member" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="">Unassigned</SelectItem>
                           {teamMembers.map((member) => (
                             <SelectItem key={member.id} value={member.id}>
                               {member.name} - {member.role}
@@ -420,20 +414,12 @@ export default function ProjectDetailsPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {form.watch("assignedTo").map((memberId) => {
-                          const member = teamMembers.find((m) => m.id === memberId);
-                          return member ? (
-                            <Badge key={memberId} variant="secondary">
-                              {member.name}
-                            </Badge>
-                          ) : null;
-                        })}
-                      </div>
-                      {form.formState.errors.assignedTo && (
-                        <p className="text-sm text-destructive">
-                          {form.formState.errors.assignedTo.message}
-                        </p>
+                      {form.watch("assignedMemberId") && (
+                        <div className="mt-2">
+                          <Badge variant="secondary">
+                            {teamMembers.find((m) => m.id === form.watch("assignedMemberId"))?.name}
+                          </Badge>
+                        </div>
                       )}
                     </div>
 
@@ -457,7 +443,7 @@ export default function ProjectDetailsPage() {
                 </form>
               </DialogContent>
             </Dialog>
-          )}
+        
         </div>
 
         <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "kanban" | "table")}>
@@ -474,11 +460,12 @@ export default function ProjectDetailsPage() {
 
           <TabsContent value="kanban" className="mt-6">
             <div className="flex gap-4 overflow-x-auto pb-4">
-              {(["To Do", "In Progress", "In Review", "Completed"] as TaskStatus[]).map(
+              {[TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED].map(
                 (status) => (
                   <KanbanColumn
                     key={status}
                     status={status}
+                    projectId={id!}
                     tasks={projectTasks.filter((t) => t.status === status)}
                     onTaskClick={setSelectedTask}
                   />
@@ -502,7 +489,7 @@ export default function ProjectDetailsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {projectTasks.map((task) => (
+                      {projectTasks?.map((task) => (
                         <tr
                           key={task.id}
                           className="border-t hover:bg-muted/30 cursor-pointer"
@@ -518,9 +505,9 @@ export default function ProjectDetailsPage() {
                             </Badge>
                           </td>
                           <td className="p-4">
-                            {task.assignedTo
-                              .map((id) => teamMembers.find((m) => m.id === id)?.name)
-                              .join(", ")}
+                            {task.assignedMemberId
+                              ? teamMembers.find((m) => m.id === task.assignedMemberId)?.name || "Unknown"
+                              : "Unassigned"}
                           </td>
                           <td className="p-4">{formatDate(task.dueDate)}</td>
                         </tr>
@@ -573,16 +560,13 @@ export default function ProjectDetailsPage() {
 
                   <div>
                     <h4 className="text-sm font-semibold mb-2">Assigned To</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedTask.assignedTo.map((memberId) => {
-                        const member = teamMembers.find((m) => m.id === memberId);
-                        return member ? (
-                          <Badge key={memberId} variant="secondary">
-                            {member.name}
-                          </Badge>
-                        ) : null;
-                      })}
-                    </div>
+                    {selectedTask.assignedMemberId ? (
+                      <Badge variant="secondary">
+                        {teamMembers.find((m) => m.id === selectedTask.assignedMemberId)?.name || "Unknown"}
+                      </Badge>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Unassigned</p>
+                    )}
                   </div>
 
                   {selectedTask.attachments.length > 0 && (
