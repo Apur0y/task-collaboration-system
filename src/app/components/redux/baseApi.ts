@@ -7,7 +7,7 @@ export const baseApi = createApi({
 
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:3000/api/v1/",
-    // credentials: "include",
+    credentials: "include",
   }),
 
   endpoints: () => ({}),
