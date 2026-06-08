@@ -25,7 +25,8 @@ import {
 import { UserRole } from "../components/store/types";
 import { loginSchema, signupSchema } from "../components/zod/zodValidation";
 import { useLoginMutation } from "../components/redux/authApi";
-
+import { toast } from "sonner";
+import Loader from "../components/Loader";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -34,7 +35,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState("login");
-  const [login]=useLoginMutation()
+  const [loginUser, {isLoading}] = useLoginMutation();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -54,13 +55,16 @@ export default function AuthPage() {
     },
   });
 
-  const handleLogin = async(data: LoginFormData) => {
-    dispatch(login(data));
+  const handleLogin = async (data: LoginFormData) => {
+    try {
+      const user = await loginUser(data).unwrap();
 
-    const result =await login(data);
-    console.log(result);
-    
-    navigate("/dashboard");
+      dispatch(login(user));
+      navigate("/dashboard");
+      console.log("GO dash");
+    } catch (error: any) {
+      toast.error(error?.data?.error || "Login failed");
+    }
   };
 
   const handleSignup = (data: SignupFormData) => {
@@ -159,8 +163,10 @@ export default function AuthPage() {
                     </div>
 
                     <Button type="submit" className="w-full cursor-pointer">
-                      Login
+                      {!isLoading? <span>Login</span> :  <Loader />}
+                     
                     </Button>
+
                   </form>
                 </motion.div>
               </TabsContent>
@@ -177,38 +183,34 @@ export default function AuthPage() {
                   >
                     <div className="flex gap-5 mt-2">
                       <div className="space-y-2">
-                      
+                        <Label htmlFor="signup-name">First Name</Label>
+                        <Input
+                          id="signup-name"
+                          type="text"
+                          placeholder="Your First Name"
+                          {...signupForm.register("firstName")}
+                        />
+                        {signupForm.formState.errors.firstName && (
+                          <p className="text-sm text-destructive">
+                            {signupForm.formState.errors.firstName.message}
+                          </p>
+                        )}
+                      </div>
 
-                      <Label htmlFor="signup-name">First Name</Label>
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="Your First Name"
-                        {...signupForm.register("firstName")}
-                      />
-                      {signupForm.formState.errors.firstName && (
-                        <p className="text-sm text-destructive">
-                          {signupForm.formState.errors.firstName.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      
-
-                      <Label htmlFor="signup-name">Last Name</Label>
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="Your Last Name"
-                        {...signupForm.register("lastName")}
-                      />
-                      {signupForm.formState.errors.lastName && (
-                        <p className="text-sm text-destructive">
-                          {signupForm.formState.errors.lastName.message}
-                        </p>
-                      )}
-                    </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-name">Last Name</Label>
+                        <Input
+                          id="signup-name"
+                          type="text"
+                          placeholder="Your Last Name"
+                          {...signupForm.register("lastName")}
+                        />
+                        {signupForm.formState.errors.lastName && (
+                          <p className="text-sm text-destructive">
+                            {signupForm.formState.errors.lastName.message}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
