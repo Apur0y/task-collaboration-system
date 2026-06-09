@@ -45,8 +45,8 @@ const item = {
 export default function DashboardPage() {
   const projects = useAppSelector((state) => state.projects.projects);
   const tasks = useAppSelector((state) => state.tasks.tasks);
-  const activities = useAppSelector((state) => state.activities.activities);
-  const teamMembers = useAppSelector((state) => state.team.members);
+  // const activities = useAppSelector((state) => state.activities.activities);
+  // const teamMembers = useAppSelector((state) => state.team.members);
 
   // Calculate KPIs
   const totalProjects = projects.length;
@@ -123,7 +123,7 @@ export default function DashboardPage() {
     },
   ];
 
-  const recentActivities = activities.slice(0, 5);
+  // const recentActivities = activities.slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -244,7 +244,7 @@ export default function DashboardPage() {
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               {recentActivities.map((activity) => (
                 <div key={activity.id} className="flex gap-3">
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2" />
@@ -256,7 +256,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
@@ -292,7 +292,7 @@ export default function DashboardPage() {
             <CardTitle>Member Workload</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               {teamMembers
                 .filter((m) => m.role === "Team Member")
                 .map((member) => (
@@ -306,7 +306,7 @@ export default function DashboardPage() {
                     <Progress value={member.workloadPercentage} />
                   </div>
                 ))}
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>

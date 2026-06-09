@@ -372,7 +372,7 @@ const handleCreateProject = async (data: ProjectFormData) => {
                     <Progress value={project.progress} />
                   </div>
                   <Link to={`/projects/${project.id}`}>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full cursor-pointer">
                       View Details
                     </Button>
                   </Link>

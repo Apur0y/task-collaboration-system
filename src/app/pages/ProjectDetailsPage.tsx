@@ -71,9 +71,10 @@ interface KanbanTaskCardProps {
 }
 
 function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
-  const teamMembers = []
-  // useAppSelector((state) => state.team.members);
-
+const {id}=useParams()
+  const { data: projectData, isLoading: isProjectLoading } = useGetProjectByIdQuery(id!);
+ const project = projectData?.data;
+  const teamMembers =project?.members
   const [{ isDragging }, drag] = useDrag({
     type: "TASK",
     item: { id: task.id },
@@ -95,7 +96,7 @@ function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
 
   const getAssigneeNames = () => {
     if (!task.assignedMemberId) return "Unassigned";
-    const member = teamMembers.find((m) => m.id === task.assignedMemberId);
+    const member = teamMembers.find((m) => m.userId === task.assignedMemberId);
     return member ? member.name.split(" ")[0] : "Unknown";
   };
 
@@ -214,9 +215,9 @@ export default function ProjectDetailsPage() {
   const [createTask] = useCreateTaskMutation();
 
   const project = projectData?.data;
+  const teamMembers =project?.members
   const projectTasks = tasksData?.data || [];
-  console.log("baha",projectTasks);
-   const teamMembers =project?.members
+  console.log("MEm",teamMembers);
 
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -249,14 +250,17 @@ export default function ProjectDetailsPage() {
   }
 
   const handleCreateTask = async (data: TaskFormData) => {
+
+    console.log("task data",data);
+    
     // Check for duplicate titles
-    const duplicate = projectTasks.find(
-      (t) => t.title.toLowerCase() === data.title.toLowerCase()
-    );
-    if (duplicate) {
-      toast.error("A task with this title already exists in this project");
-      return;
-    }
+    // const duplicate = projectTasks.find(
+    //   (t) => t.title.toLowerCase() === data.title.toLowerCase()
+    // );
+    // if (duplicate) {
+    //   toast.error("A task with this title already exists in this project");
+    //   return;
+    // }
 
     try {
       await createTask({
@@ -399,20 +403,20 @@ export default function ProjectDetailsPage() {
                         <SelectTrigger>
                           <SelectValue placeholder="Select a team member" />
                         </SelectTrigger>
-                        <SelectContent>
+                        {/* <SelectContent>
                           <SelectItem value="">Unassigned</SelectItem>
                           {teamMembers?.map((member) => (
-                            <SelectItem key={member.id} value={member.id}>
-                              {member.name} - {member.role}
+                            <SelectItem key={member.userId} value={member.userId}>
+                              {member.userEmail} - {member.role}
                             </SelectItem>
                           ))}
-                        </SelectContent>
+                        </SelectContent> */}
                       </Select>
                       {form.watch("assignedMemberId") && (
                         <div className="mt-2">
-                          <Badge variant="secondary">
+                          {/* <Badge variant="secondary">
                             {teamMembers.find((m) => m.id === form.watch("assignedMemberId"))?.name}
-                          </Badge>
+                          </Badge> */}
                         </div>
                       )}
                     </div>
@@ -498,11 +502,11 @@ export default function ProjectDetailsPage() {
                               {task.priority}
                             </Badge>
                           </td>
-                          <td className="p-4">
+                          {/* <td className="p-4">
                             {task.assignedMemberId
                               ? teamMembers.find((m) => m.id === task.assignedMemberId)?.name || "Unknown"
                               : "Unassigned"}
-                          </td>
+                          </td> */}
                           <td className="p-4">{formatDate(task.dueDate)}</td>
                         </tr>
                       ))}
@@ -556,7 +560,7 @@ export default function ProjectDetailsPage() {
                     <h4 className="text-sm font-semibold mb-2">Assigned To</h4>
                     {selectedTask.assignedMemberId ? (
                       <Badge variant="secondary">
-                        {teamMembers.find((m) => m.id === selectedTask.assignedMemberId)?.name || "Unknown"}
+                        {/* {teamMembers.find((m) => m.id === selectedTask.assignedMemberId)?.name || "Unknown"} */}
                       </Badge>
                     ) : (
                       <p className="text-sm text-muted-foreground">Unassigned</p>

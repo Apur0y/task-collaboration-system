@@ -29,7 +29,7 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleLogout = async () => {
-    console.log("Login oy");
+   
     try {
       await logoutUser({}).unwrap(); // RTK Query safe call
 
@@ -48,6 +48,7 @@ export function Navbar() {
       .toUpperCase();
   };
 
+  console.log(user);
   return (
     <header className="border-b bg-card sticky top-0 z-40">
       <div className="flex h-16 items-center px-6 gap-4">
