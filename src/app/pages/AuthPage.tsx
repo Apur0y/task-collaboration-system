@@ -82,9 +82,33 @@ export default function AuthPage() {
     }
   };
 
-  const handleDemoLogin = (role: UserRole) => {
-    dispatch(loginWithRole(role));
-    navigate("/dashboard");
+  const handleDemoLogin =async (role:any) => {
+    const adminData={
+      email:"admin3@gmail.com",
+      password:"12345678"
+    }
+    const userData={
+      email:"user@gmail.com",
+      password:"12345678"
+    }
+
+    try {
+     if (role=="ADMIN"){
+      const user = await loginUser(adminData).unwrap();
+      dispatch(login(user.data.user));
+     
+      navigate("/dashboard");
+     } else{
+      const user = await loginUser(userData).unwrap();
+      dispatch(login(user.data.user));
+     
+      navigate("/dashboard");
+     }
+
+      
+    } catch (error: any) {
+      toast.error(error?.data?.error || "Login failed");
+    }
   };
 
   return (
@@ -273,21 +297,15 @@ export default function AuthPage() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => handleDemoLogin("Admin")}
+                  onClick={() => handleDemoLogin("ADMIN")}
                 >
                   Demo Login as Admin
                 </Button>
+              
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => handleDemoLogin("Project Manager")}
-                >
-                  Demo Login as Project Manager
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => handleDemoLogin("Team Member")}
+                  onClick={() => handleDemoLogin("USER")}
                 >
                   Demo Login as Team Member
                 </Button>

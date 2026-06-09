@@ -23,7 +23,6 @@ export default function TeamPage() {
   const teamMembers = useAppSelector((state) => state.team.members);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
-  const canManageTeam = user?.role === "Admin" || user?.role === "Project Manager";
 
   const getInitials = (name: string) => {
     return name
@@ -55,7 +54,6 @@ export default function TeamPage() {
             Manage your team members and their workload
           </p>
         </div>
-        {canManageTeam && (
           <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -94,7 +92,7 @@ export default function TeamPage() {
               </div>
             </DialogContent>
           </Dialog>
-        )}
+ 
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

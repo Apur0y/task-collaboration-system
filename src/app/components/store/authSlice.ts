@@ -19,20 +19,15 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     login: (state, action: PayloadAction<User>) => {
-      console.log(action);
+
       state.user = action.payload;
       state.isAuthenticated = true;
       state.isLoading = false;
     },
 
-    loginWithRole: (state, action: PayloadAction<User["role"]>) => {
-      const user = mockUsers.find((u) => u.role === action.payload);
-
-      if (user) {
-        state.user = user;
-        state.isAuthenticated = true;
-      }
-
+    loginWithRole: (state, action) => {
+        state.user = action.payload;
+      state.isAuthenticated = true;
       state.isLoading = false;
     },
 
